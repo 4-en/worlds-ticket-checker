@@ -3,5 +3,5 @@ checks every 60s if tickets for specified lol worlds 2023 games are available an
 
 
 Requirements:
-[Windows-Toasts](https://pypi.org/project/Windows-Toasts/)<br>
+[Windows-Toasts](https://pypi.org/project/Windows-Toasts/) (Only for Windows notifications)<br>
 `$ python -m pip install windows-toasts`
