@@ -3,6 +3,17 @@
 import requests
 import time
 
+ENABLE_WINDOWS_NOTIFICATIONS = True
+
+#check if os is windows
+import os
+if os.name != "nt":
+    ENABLE_WINDOWS_NOTIFICATIONS = False
+    print("Windows notifications are not enabled because you are not on Windows")
+
+if ENABLE_WINDOWS_NOTIFICATIONS:
+    from windows_toasts import Toast, WindowsToaster
+
 
 class Checker:
     """
@@ -22,11 +33,19 @@ class Checker:
             "https://ticket.globalinterpark.com/Global/Play/Goods/GoodsInfoXml.asp?Flag=RemainSeat&GoodsCode=23009642&PlaceCode=23000822&PlaySeq=001&LanguageType=G2001",
             "https://ticket.globalinterpark.com/Global/Play/Goods/GoodsInfoXml.asp?Flag=RemainSeat&GoodsCode=23009339&PlaceCode=23000822&PlaySeq=001&LanguageType=G2001"]
         
+        # add available tickets on thursday for testing
+        self.urls.append("https://ticket.globalinterpark.com/Global/Play/Goods/GoodsInfoXml.asp?Flag=RemainSeat&GoodsCode=23009639&PlaceCode=23000822&PlaySeq=001&LanguageType=G2001")
+        
+        # create toaster if enabled
+        if ENABLE_WINDOWS_NOTIFICATIONS:
+            self.toaster = WindowsToaster("Worlds 2023 Tickets")
+        
     def checkLoop(self, interval=60):
         """Checks for tickets every interval seconds"""
         count = 0
         while True:
             self.checkAll()
+
             count += 1
             print("Checked " + str(count) + " times", end="\r")
             time.sleep(interval)
@@ -60,11 +79,19 @@ class Checker:
             if totalCount > 0:
                 print()
                 print("Tickets are available")
+
                 # print link to website
                 goodsCode = url[url.find("GoodsCode=")+10:url.find("&PlaceCode")]
                 if goodsCode == "23010160":
                     print("FINAL TICKETS ARE AVAILABLE@@@@")
                 print(self.link.format(GoodsCode=goodsCode))
+
+                if ENABLE_WINDOWS_NOTIFICATIONS:
+                    # show notification
+                    toast = Toast(("Tickets are available", "Click to open website"))
+                    toast.on_activated = lambda _: os.startfile(self.link.format(GoodsCode=goodsCode))
+                    self.toaster.show_toast(toast)
+
         else:
             # print error message
             print()
