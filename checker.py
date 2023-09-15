@@ -55,6 +55,18 @@ class Checker:
         for url in self.urls:
             self.check(url)
 
+
+    def on_available(self, site_url):
+        """Called when tickets are available.
+        Useful to override for custom notifications"""
+
+        # send windows notification if enabled
+        if ENABLE_WINDOWS_NOTIFICATIONS:
+            # show notification
+            toast = Toast(("Tickets are available", "Click to open website", site_url))
+            toast.on_activated = lambda _: os.startfile(site_url)
+            self.toaster.show_toast(toast)
+
     def check(self, url):
         """Checks url for tickets
         Prints message if tickets are available"""
@@ -86,11 +98,9 @@ class Checker:
                     print("FINAL TICKETS ARE AVAILABLE@@@@")
                 print(self.link.format(GoodsCode=goodsCode))
 
-                if ENABLE_WINDOWS_NOTIFICATIONS:
-                    # show notification
-                    toast = Toast(("Tickets are available", "Click to open website"))
-                    toast.on_activated = lambda _: os.startfile(self.link.format(GoodsCode=goodsCode))
-                    self.toaster.show_toast(toast)
+                # call on_available
+                self.on_available(self.link.format(GoodsCode=goodsCode))
+
 
         else:
             # print error message
