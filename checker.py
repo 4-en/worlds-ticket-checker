@@ -43,12 +43,17 @@ class Checker:
     def checkLoop(self, interval=60):
         """Checks for tickets every interval seconds"""
         count = 0
-        while True:
-            self.checkAll()
+        try:
+            while True:
+                self.checkAll()
 
-            count += 1
-            print("Checked " + str(count) + " times", end="\r")
-            time.sleep(interval)
+                count += 1
+                print("Checked " + str(count) + " times", end="\r")
+                time.sleep(interval)
+        except KeyboardInterrupt:
+            print("Keyboard Interrupt")
+            print("Exiting...")
+            exit(0)
     
     def checkAll(self):
         """Checks all urls"""
