@@ -5,8 +5,14 @@ import time
 
 
 class Checker:
+    """
+    Checks for available tickets for lol worlds 2023"""
     def __init__(self):
+        # link to buy tickets
         self.link = "https://www.globalinterpark.com/product/{GoodsCode}?lang=en"
+
+        # list of urls to check
+        # only links for weekend swiss rounds and finals
         self.urls = ["https://ticket.globalinterpark.com/Global/Play/Goods/GoodsInfoXml.asp?Flag=RemainSeat&GoodsCode=23010160&PlaceCode=23000829&PlaySeq=001&LanguageType=G2001",
             "https://ticket.globalinterpark.com/Global/Play/Goods/GoodsInfoXml.asp?Flag=RemainSeat&GoodsCode=23009641&PlaceCode=23000822&PlaySeq=001&LanguageType=G2001",
             "https://ticket.globalinterpark.com/Global/Play/Goods/GoodsInfoXml.asp?Flag=RemainSeat&GoodsCode=23009337&PlaceCode=23000822&PlaySeq=001&LanguageType=G2001",
@@ -17,6 +23,7 @@ class Checker:
             "https://ticket.globalinterpark.com/Global/Play/Goods/GoodsInfoXml.asp?Flag=RemainSeat&GoodsCode=23009339&PlaceCode=23000822&PlaySeq=001&LanguageType=G2001"]
         
     def checkLoop(self, interval=60):
+        """Checks for tickets every interval seconds"""
         count = 0
         while True:
             self.checkAll()
@@ -25,10 +32,13 @@ class Checker:
             time.sleep(interval)
     
     def checkAll(self):
+        """Checks all urls"""
         for url in self.urls:
             self.check(url)
 
     def check(self, url):
+        """Checks url for tickets
+        Prints message if tickets are available"""
         # make request to url
         response = requests.get(url)
         # check if response is good
