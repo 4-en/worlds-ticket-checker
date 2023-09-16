@@ -6,9 +6,10 @@ checks every ~10s if tickets for specified lol worlds 2023 games are available a
 [Windows-Toasts](https://pypi.org/project/Windows-Toasts/) (Only for Windows notifications in AdvancedChecker)<br>
 `$ python -m pip install windows-toasts`
 
-###Usage
+### Usage
 Command line:
 - $ python checker.py [options]
+- use -h or --help to see all options
 
 Code:
 - import Checker or AdvancedChecker from checker.py
