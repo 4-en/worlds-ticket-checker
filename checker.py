@@ -3,56 +3,16 @@
 import requests
 import time
 import smtplib, ssl
-
-ENABLE_WINDOWS_NOTIFICATIONS = True
-INTERVAL = 20 # seconds
-
-USER = "user"
-PASSWORD = "password"
-RECEIVER_EMAIL = "receiver email"
-PORT = 465 # for ssl
-SMTP_SERVER = "smtp.gmail.com"
-
-
-emailLoaded = False
-# load user and password from file
-try:
-    with open("email.cfg", "r") as file:
-        USER = file.readline().strip()
-        PASSWORD = file.readline().strip()
-        RECEIVER_EMAIL = file.readline().strip()
-except FileNotFoundError:
-    print("email.cfg not found. Please create it with the following format:")
-    print("user")
-    print("password")
-    print("receiver email")
-    print("Continuing without email notifications")
-else:
-    print("Loaded user and password from email.cfg")
-    emailLoaded = True
-
-# send test email
-if emailLoaded:
-    context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(SMTP_SERVER, PORT, context=context) as server:
-        server.login(USER, PASSWORD)
-        server.sendmail(USER, RECEIVER_EMAIL, "Ticket checker is running.\nYou will receive an email when tickets are available")
-    print("Test email sent")
-
-#check if os is windows
+import random
 import os
-if os.name != "nt":
-    ENABLE_WINDOWS_NOTIFICATIONS = False
-    print("Windows notifications are not enabled because you are not on Windows")
-
-if ENABLE_WINDOWS_NOTIFICATIONS:
-    from windows_toasts import Toast, WindowsToaster
 
 
 class Checker:
     """
-    Checks for available tickets for lol worlds 2023"""
-    def __init__(self):
+    Checks for available tickets for lol worlds 2023
+    Base class with cmd line output in on_available
+    """
+    def __init__(self, urls=None, interval=10, randomize=False):
         # link to buy tickets
         self.link = "https://www.globalinterpark.com/product/{GoodsCode}?lang=en"
 
@@ -67,15 +27,29 @@ class Checker:
             "https://ticket.globalinterpark.com/Global/Play/Goods/GoodsInfoXml.asp?Flag=RemainSeat&GoodsCode=23009642&PlaceCode=23000822&PlaySeq=001&LanguageType=G2001",
             "https://ticket.globalinterpark.com/Global/Play/Goods/GoodsInfoXml.asp?Flag=RemainSeat&GoodsCode=23009339&PlaceCode=23000822&PlaySeq=001&LanguageType=G2001"]
         
-        # add available tickets on thursday for testing
-        self.urls.append("https://ticket.globalinterpark.com/Global/Play/Goods/GoodsInfoXml.asp?Flag=RemainSeat&GoodsCode=23009639&PlaceCode=23000822&PlaySeq=001&LanguageType=G2001")
+        # use provided urls if not None
+        if urls is not None:
+            self.urls = urls
+
+        self.notifiedTracker = set()
+
+        self.interval = interval
+        self.randomize = randomize
+
+    def getSleepTime(self):
+        """Returns time to sleep before checking again"""
+        if not self.randomize:
+            return self.interval
         
-        # create toaster if enabled
-        if ENABLE_WINDOWS_NOTIFICATIONS:
-            self.toaster = WindowsToaster("Worlds 2023 Tickets")
+        # randomize sleep time
+        rand = random.random() ** 2 * self.interval
+        rand = rand if random.random() < 0.5 else -rand
+        sleepTime = max(1,self.interval + rand)
+        return sleepTime
+
         
-    def checkLoop(self, interval=INTERVAL):
-        """Checks for tickets every interval seconds"""
+    def checkLoop(self):
+        """Checks for tickets every self.interval seconds"""
         count = 0
         try:
             while True:
@@ -83,7 +57,7 @@ class Checker:
 
                 count += 1
                 print("Checked " + str(count) + " times", end="\r")
-                time.sleep(interval)
+                time.sleep(self.interval)
         except KeyboardInterrupt:
             print("Keyboard Interrupt")
             print("Exiting...")
@@ -95,28 +69,14 @@ class Checker:
             self.check(url)
 
 
-    def on_available(self, site_url):
+    def on_available(self, message, site_url):
         """Called when tickets are available.
         Useful to override for custom notifications"""
 
-        # send windows notification if enabled
-        if ENABLE_WINDOWS_NOTIFICATIONS:
-            # show notification
-            toast = Toast(("Tickets are available", "Click to open website", site_url))
-            toast.on_activated = lambda _: os.startfile(site_url)
-            self.toaster.show_toast(toast)
+        print(message)
+        print(site_url)
 
-        # send email if enabled
-        if emailLoaded:
-            # create secure ssl context
-            context = ssl.create_default_context()
-            # create secure connection with server
-            with smtplib.SMTP_SSL(SMTP_SERVER, PORT, context=context) as server:
-                # login to server
-                server.login(USER, PASSWORD)
-                # send email
-                server.sendmail(USER, RECEIVER_EMAIL, "Tickets are available\n" + site_url)
-            print("Email sent")
+        
 
     def check(self, url):
         """Checks url for tickets
@@ -137,20 +97,31 @@ class Checker:
                 totalCount += int(response.text[index + 11:end])
                 index = end+1
 
-            # print total count
             
             if totalCount > 0:
-                print()
-                print("Tickets are available")
+                # tickets are available
+
+                # check if already notified
+                if url in self.notifiedTracker:
+                    return
+
+                msg = "Tickets are available"
 
                 # print link to website
                 goodsCode = url[url.find("GoodsCode=")+10:url.find("&PlaceCode")]
                 if goodsCode == "23010160":
-                    print("FINAL TICKETS ARE AVAILABLE@@@@")
-                print(self.link.format(GoodsCode=goodsCode))
+                    msg = "FINAL TICKETS ARE AVAILABLE@@@@"
+                
+                link = self.link.format(GoodsCode=goodsCode)
 
                 # call on_available
-                self.on_available(self.link.format(GoodsCode=goodsCode))
+                self.on_available(msg, link)
+
+            else:
+                # tickets are not available
+                # remove from notified tracker
+                if url in self.notifiedTracker:
+                    self.notifiedTracker.remove(url)
 
 
         else:
@@ -158,10 +129,78 @@ class Checker:
             print()
             print("Error: Could not connect to website")
             print("Status Code: " + str(response.status_code))
+
+
+class AdvancedChecker(Checker):
+    """
+    Checker with email and windows notifications
+    """
+
+    def __init__(self, urls=None, interval=10, randomize=False, port=465, smtp_server="smtp.gmail.com"):
+        super().__init__(urls, interval, randomize)
+
+        # check if platform is windows
+        if os.name == "nt":
+            #import toaster
+            from windows_toasts import Toast, WindowsToaster
+            self.Toast = Toast
+            self.WindowsToaster = WindowsToaster
+
+            self.toaster = self.WindowsToaster("Worlds 2023 Tickets")
+        else:
+            self.toaster = None
+
+        # load user and password from file
+        self.emailLoaded = False
+        self.smtp_server = smtp_server
+        self.port = port
+        try:
+            with open("email.cfg", "r") as file:
+                self.USER = file.readline().strip()
+                self.PASSWORD = file.readline().strip()
+                self.RECEIVER_EMAIL = file.readline().strip()
+        except FileNotFoundError:
+            print("email.cfg not found. Please create it with the following format:")
+            print("user")
+            print("password")
+            print("receiver email")
+            print("Continuing without email notifications")
+        else:
+            print("Loaded user and password from email.cfg")
+            self.emailLoaded = True
+
+        # send start email
+        self.send_email("Ticket checker is running", "You will receive an email when tickets are available")
+        
+
+    def send_email(self, subject="", message=""):
+        """Sends email to RECEIVER_EMAIL with message"""
+        if not self.emailLoaded:
+            return
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(self.smtp_server, self.port, context=context) as server:
+            server.login(self.USER, self.PASSWORD)
+            server.sendmail(self.USER, self.RECEIVER_EMAIL, "Subject: " + subject + "\n\n" + message)
+
+    def on_available(self, message, site_url):
+        """Called when tickets are available.
+        Useful to override for custom notifications"""
+
+        super().on_available(message, site_url)
+
+        # send email
+        self.send_email("Tickets are available", message + "\n" + site_url)
+
+        # send windows notification
+        if self.toaster is not None:
+            toast = self.Toast((message, "Click to open website", site_url))
+            toast.on_activated = lambda _: os.startfile(site_url)
+            self.toaster.show_toast(toast)
         
 
 def main():
-    checker = Checker()
+    checker = AdvancedChecker(interval=10, randomize=True)
     checker.checkLoop()
 
 if __name__ == "__main__":
