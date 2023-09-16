@@ -2,9 +2,42 @@
 
 import requests
 import time
+import smtplib, ssl
 
 ENABLE_WINDOWS_NOTIFICATIONS = True
 INTERVAL = 20 # seconds
+
+USER = "user"
+PASSWORD = "password"
+RECEIVER_EMAIL = "receiver email"
+PORT = 465 # for ssl
+SMTP_SERVER = "smtp.gmail.com"
+
+
+emailLoaded = False
+# load user and password from file
+try:
+    with open("email.cfg", "r") as file:
+        USER = file.readline().strip()
+        PASSWORD = file.readline().strip()
+        RECEIVER_EMAIL = file.readline().strip()
+except FileNotFoundError:
+    print("email.cfg not found. Please create it with the following format:")
+    print("user")
+    print("password")
+    print("receiver email")
+    print("Continuing without email notifications")
+else:
+    print("Loaded user and password from email.cfg")
+    emailLoaded = True
+
+# send test email
+if emailLoaded:
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(SMTP_SERVER, PORT, context=context) as server:
+        server.login(USER, PASSWORD)
+        server.sendmail(USER, RECEIVER_EMAIL, "Test email")
+    print("Test email sent")
 
 #check if os is windows
 import os
@@ -72,6 +105,18 @@ class Checker:
             toast = Toast(("Tickets are available", "Click to open website", site_url))
             toast.on_activated = lambda _: os.startfile(site_url)
             self.toaster.show_toast(toast)
+
+        # send email if enabled
+        if emailLoaded:
+            # create secure ssl context
+            context = ssl.create_default_context()
+            # create secure connection with server
+            with smtplib.SMTP_SSL(SMTP_SERVER, PORT, context=context) as server:
+                # login to server
+                server.login(USER, PASSWORD)
+                # send email
+                server.sendmail(USER, RECEIVER_EMAIL, "Tickets are available\n" + site_url)
+            print("Email sent")
 
     def check(self, url):
         """Checks url for tickets
