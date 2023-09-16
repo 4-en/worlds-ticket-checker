@@ -36,7 +36,7 @@ if emailLoaded:
     context = ssl.create_default_context()
     with smtplib.SMTP_SSL(SMTP_SERVER, PORT, context=context) as server:
         server.login(USER, PASSWORD)
-        server.sendmail(USER, RECEIVER_EMAIL, "Test email")
+        server.sendmail(USER, RECEIVER_EMAIL, "Ticket checker is running.\nYou will receive an email when tickets are available")
     print("Test email sent")
 
 #check if os is windows
