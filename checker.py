@@ -136,7 +136,7 @@ class AdvancedChecker(Checker):
     Checker with email and windows notifications
     """
 
-    def __init__(self, urls=None, interval=10, randomize=False, port=465, smtp_server="smtp.gmail.com"):
+    def __init__(self, urls=None, interval=10, randomize=False, port=465, smtp_server="smtp.gmail.com", receiver_email=None, user=None, password=None):
         super().__init__(urls, interval, randomize)
 
         # check if platform is windows
@@ -154,20 +154,27 @@ class AdvancedChecker(Checker):
         self.emailLoaded = False
         self.smtp_server = smtp_server
         self.port = port
-        try:
-            with open("email.cfg", "r") as file:
-                self.USER = file.readline().strip()
-                self.PASSWORD = file.readline().strip()
-                self.RECEIVER_EMAIL = file.readline().strip()
-        except FileNotFoundError:
-            print("email.cfg not found. Please create it with the following format:")
-            print("user")
-            print("password")
-            print("receiver email")
-            print("Continuing without email notifications")
-        else:
-            print("Loaded user and password from email.cfg")
+        self.USER = user
+        self.PASSWORD = password
+        self.RECEIVER_EMAIL = receiver_email
+
+        if self.USER is not None and self.PASSWORD is not None and self.RECEIVER_EMAIL is not None:
             self.emailLoaded = True
+        else:
+            try:
+                with open("email.cfg", "r") as file:
+                    self.USER = file.readline().strip()
+                    self.PASSWORD = file.readline().strip()
+                    self.RECEIVER_EMAIL = file.readline().strip()
+            except FileNotFoundError:
+                print("email.cfg not found. Please create it with the following format:")
+                print("user")
+                print("password")
+                print("receiver email")
+                print("Continuing without email notifications")
+            else:
+                print("Loaded user and password from email.cfg")
+                self.emailLoaded = True
 
         # send start email
         self.send_email("Ticket checker is running", "You will receive an email when tickets are available")
@@ -200,7 +207,31 @@ class AdvancedChecker(Checker):
         
 
 def main():
-    checker = AdvancedChecker(interval=10, randomize=True)
+    # if called from command line, import argparse
+    import argparse
+
+    # parse arguments
+    parser = argparse.ArgumentParser(description="Checks for available tickets for lol worlds 2023")
+    parser.add_argument("-i", "--interval", type=int, default=10, help="Interval in seconds between checks")
+    parser.add_argument("-b", "--basic", action="store_true", help="Use basic checker")
+    parser.add_argument("-u", "--user", type=str, help="User for email notifications")
+    parser.add_argument("-p", "--password", type=str, help="Password for email notifications")
+    parser.add_argument("-r", "--receiver", type=str, help="Receiver email for email notifications")
+    parser.add_argument("-s", "--server", type=str, default="smtp.gmail.com", help="SMTP server for email notifications")
+
+
+    # create checker
+    checker = AdvancedChecker(
+        interval=parser.parse_args().interval,
+        randomize=True,
+        user=parser.parse_args().user,
+        password=parser.parse_args().password,
+        receiver_email=parser.parse_args().receiver,
+        smtp_server=parser.parse_args().server
+    ) if not parser.parse_args().basic else Checker(
+        interval=parser.parse_args().interval,
+        randomize=True
+    )
     checker.checkLoop()
 
 if __name__ == "__main__":
