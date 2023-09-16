@@ -4,6 +4,7 @@ import requests
 import time
 
 ENABLE_WINDOWS_NOTIFICATIONS = True
+INTERVAL = 20 # seconds
 
 #check if os is windows
 import os
@@ -40,7 +41,7 @@ class Checker:
         if ENABLE_WINDOWS_NOTIFICATIONS:
             self.toaster = WindowsToaster("Worlds 2023 Tickets")
         
-    def checkLoop(self, interval=60):
+    def checkLoop(self, interval=INTERVAL):
         """Checks for tickets every interval seconds"""
         count = 0
         try:
