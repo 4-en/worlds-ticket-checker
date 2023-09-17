@@ -76,6 +76,12 @@ class Checker:
         print(message)
         print(site_url)
 
+
+    def on_unavailable(self, message):
+        """Called when tickets are unavailable.
+        Useful to override for custom notifications"""
+
+        print(message)
         
 
     def check(self, url):
@@ -104,6 +110,9 @@ class Checker:
                 # check if already notified
                 if url in self.notifiedTracker:
                     return
+                
+                # add to notified tracker
+                self.notifiedTracker.add(url)
 
                 msg = "Tickets are available"
 
@@ -122,6 +131,12 @@ class Checker:
                 # remove from notified tracker
                 if url in self.notifiedTracker:
                     self.notifiedTracker.remove(url)
+
+                    # tickets no longer available
+                    msg = "Tickets are no longer available"
+                    # call on_unavailable
+                    self.on_unavailable(msg)
+
 
 
         else:
