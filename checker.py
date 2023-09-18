@@ -52,6 +52,7 @@ class Checker:
         """Checks for tickets every self.interval seconds"""
         count = 0
         try:
+            print("[{}] Checking for tickets every ".format(time.strftime("%H:%M:%S")) + ("~" if self.randomize else "") + str(self.interval) + " seconds")
             while True:
                 self.checkAll()
 
@@ -115,12 +116,12 @@ class Checker:
                 # add to notified tracker
                 self.notifiedTracker.add(url)
 
-                msg = "Tickets are available"
+                msg = "[{}] Tickets are available".format(time.strftime("%H:%M:%S"))
 
                 # print link to website
                 goodsCode = url[url.find("GoodsCode=")+10:url.find("&PlaceCode")]
                 if goodsCode == "23010160":
-                    msg = "FINAL TICKETS ARE AVAILABLE@@@@"
+                    msg = "[{}] FINAL TICKETS ARE AVAILABLE@@@@".format(time.strftime("%H:%M:%S"))
                 
                 link = self.link.format(GoodsCode=goodsCode)
 
@@ -134,7 +135,7 @@ class Checker:
                     self.notifiedTracker.remove(url)
 
                     # tickets no longer available
-                    msg = "Tickets are no longer available"
+                    msg = "[{}] Tickets are no longer available".format(time.strftime("%H:%M:%S"))
                     # call on_unavailable
                     self.on_unavailable(msg)
 
