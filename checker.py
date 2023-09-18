@@ -96,6 +96,7 @@ class Checker:
             totalCount = 0
             index = 0
             while index < len(response.text):
+                # TODO: save type of seats
                 index = response.text.find("<RemainCnt>", index)
                 if index == -1:
                     break
