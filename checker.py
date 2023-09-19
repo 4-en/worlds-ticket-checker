@@ -5,7 +5,28 @@ import time
 import smtplib, ssl
 import random
 import os
+import xml.etree.ElementTree as ET
 
+
+def xml_to_dict(element):
+    result = {}
+    for child in element:
+        child_dict = xml_to_dict(child)
+        if child_dict:
+            if child.tag in result:
+                if type(result[child.tag]) is list:
+                    result[child.tag].append(child_dict)
+                else:
+                    result[child.tag] = [result[child.tag], child_dict]
+            else:
+                result[child.tag] = child_dict
+        elif child.text:
+            result[child.tag] = child.text
+    return result
+
+def xml_string_to_dict(xml: str):
+    root = ET.fromstring(xml)
+    return xml_to_dict(root)
 
 class Checker:
     """
@@ -96,6 +117,20 @@ class Checker:
             # find <RemainCnt>COUNT</RemainCnt>
             totalCount = 0
             index = 0
+
+            d = xml_string_to_dict(response.text)
+            tickets = {}
+            for i in d["Table"]:
+                available = int(i["RemainCnt"])
+                if available > 0:
+                    tickets[i["SeatGradeName"]] = available
+
+            if len(tickets) > 0:
+                # TODO: switch to using tickets dict
+                # for now, just print all available tickets
+                for key, value in tickets.items():
+                    print(key + ": " + str(value))
+
             while index < len(response.text):
                 # TODO: save type of seats
                 index = response.text.find("<RemainCnt>", index)
