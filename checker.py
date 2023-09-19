@@ -89,6 +89,9 @@ class Checker:
     def checkAll(self):
         """Checks all urls"""
         for url in self.urls:
+            if self.finalsOnly:
+                if not "23010160" in url:
+                    continue
             self.check(url)
 
 
@@ -147,8 +150,7 @@ class Checker:
                 goodsCode = url[url.find("GoodsCode=")+10:url.find("&PlaceCode")]
                 if goodsCode == "23010160":
                     msg = "[{}] FINAL TICKETS ARE AVAILABLE@@@@".format(time.strftime("%H:%M:%S"))
-                elif self.finalsOnly:
-                    return
+                
                 
                 msg += "\n" + "\n".join([k + ": " + str(v) for k,v in tickets.items()])
                 
