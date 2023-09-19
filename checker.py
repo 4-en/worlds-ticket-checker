@@ -56,6 +56,7 @@ class Checker:
 
         self.interval = interval
         self.randomize = randomize
+        self.finalsOnly = True
 
     def getSleepTime(self):
         """Returns time to sleep before checking again"""
@@ -123,25 +124,14 @@ class Checker:
             for i in d["Table"]:
                 available = int(i["RemainCnt"])
                 if available > 0:
-                    tickets[i["SeatGradeName"]] = available
+                    name = i["SeatGradeName"]
+                    # remove non ascii characters
+                    name = "".join([c for c in name if ord(c) < 128])
+                    tickets[name] = available
 
-            if len(tickets) > 0:
-                # TODO: switch to using tickets dict
-                # for now, just print all available tickets
-                for key, value in tickets.items():
-                    print(key + ": " + str(value))
-
-            while index < len(response.text):
-                # TODO: save type of seats
-                index = response.text.find("<RemainCnt>", index)
-                if index == -1:
-                    break
-                end = response.text.find("</RemainCnt>", index)
-                totalCount += int(response.text[index + 11:end])
-                index = end+1
 
             
-            if totalCount > 0:
+            if len(tickets) > 0:
                 # tickets are available
 
                 # check if already notified
@@ -157,6 +147,10 @@ class Checker:
                 goodsCode = url[url.find("GoodsCode=")+10:url.find("&PlaceCode")]
                 if goodsCode == "23010160":
                     msg = "[{}] FINAL TICKETS ARE AVAILABLE@@@@".format(time.strftime("%H:%M:%S"))
+                elif self.finalsOnly:
+                    return
+                
+                msg += "\n" + "\n".join([k + ": " + str(v) for k,v in tickets.items()])
                 
                 link = self.link.format(GoodsCode=goodsCode)
 
