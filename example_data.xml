@@ -10,7 +10,7 @@
     <Table>
         <SeatGrade>2</SeatGrade>
         <SeatGradeName>TIER2</SeatGradeName>
-        <RemainCnt>0</RemainCnt>
+        <RemainCnt>2</RemainCnt>
         <IsSeatCntView>Y</IsSeatCntView>
         <SalesPrice>210000</SalesPrice>
         <SACTodayYN>N</SACTodayYN>
@@ -34,7 +34,7 @@
     <Table>
         <SeatGrade>5</SeatGrade>
         <SeatGradeName>TIER4(108~114구역,206~210구역)</SeatGradeName>
-        <RemainCnt>0</RemainCnt>
+        <RemainCnt>4</RemainCnt>
         <IsSeatCntView>Y</IsSeatCntView>
         <SalesPrice>140000</SalesPrice>
         <SACTodayYN>N</SACTodayYN>

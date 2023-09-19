@@ -29,8 +29,18 @@ root = ET.fromstring(data)
 
 d = xml_to_dict(root)
 
+total = 0
+names = []
 for i in d["Table"]:
     print("Name: " + i["SeatGradeName"])
     print("Price: " + i["SalesPrice"])
     print("Availability: " + i["RemainCnt"])
     print()
+
+    available = int(i["RemainCnt"])
+    if available > 0:
+        total += available
+        names.append(i["SeatGradeName"])
+
+print("Total available seats: " + str(total))
+print("Available seats: " + ", ".join(names))
