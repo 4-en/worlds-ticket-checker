@@ -149,7 +149,7 @@ class Checker:
                 # print link to website
                 goodsCode = url[url.find("GoodsCode=")+10:url.find("&PlaceCode")]
                 if goodsCode == "23010160":
-                    msg = "[{}] FINAL TICKETS ARE AVAILABLE@@@@".format(time.strftime("%H:%M:%S"))
+                    msg = "[{}] @@@@ FINAL TICKETS ARE AVAILABLE @@@@@".format(time.strftime("%H:%M:%S"))
                 
                 
                 msg += "\n" + "\n".join([k + ": " + str(v) for k,v in tickets.items()])
